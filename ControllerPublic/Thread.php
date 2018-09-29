@@ -50,20 +50,22 @@ class AssociationMc_ControllerPublic_Thread extends XFCP_AssociationMc_Controlle
         $model = $this->_getAssociationEntryModel();
         $entries = $model->getEntriesByUserIds($uniqueUserIds, true);
         $names = [];
-        $maxCount = XenForo_Application::get('options')->maxAccountsDisplaySidebar;
+        if (!empty($entries)) {
+            $maxCount = XenForo_Application::get('options')->maxAccountsDisplaySidebar;
 
-        foreach ($entries as $entry) {
-            if (!array_key_exists($entry['xenforo_id'], $names)) {
-                $names[$entry['xenforo_id']] = [];
+            foreach ($entries as $entry) {
+                if (!array_key_exists($entry['xenforo_id'], $names)) {
+                    $names[$entry['xenforo_id']] = [];
+                }
+                // could SELECT instead
+                if (!$entry['display_by_posts'] || count($names[$entry['xenforo_id']]) >= $maxCount) {
+                    continue;
+                }
+                $names[$entry['xenforo_id']][] = array(
+                    'minecraft_uuid' => bin2hex($entry['minecraft_uuid']),
+                    'last_username' => $entry['last_username']
+                );
             }
-            // could SELECT instead
-            if (!$entry['display_by_posts'] || count($names[$entry['xenforo_id']]) >= $maxCount) {
-                continue;
-            }
-            $names[$entry['xenforo_id']][] = array(
-                'minecraft_uuid' => bin2hex($entry['minecraft_uuid']),
-                'last_username' => $entry['last_username']
-            );
         }
         $view->params['mcNames'] = $names;
         return $view;
